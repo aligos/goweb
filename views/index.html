@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <title>Hallo html with go</title>
+  </head>
+  <body>
+    <p>Hello, {{.Name}}</p>
+
+    {{if .DBStatus}}
+      <p> The database connection is alive! </p>
+    {{else}}
+      <p>The database connection is dead!</p>
+    {{end}}
+  </body>
+</html>
