@@ -18,9 +18,9 @@
         padding: .3em;
         color: #333333;
         border: 1px solid #f5f5f5;
-        background-color: white;
+        background-color: #f5f5f5;
         border-radius: 3px;
-        border-bottom: 5px solid #f5f5f5;
+        border-bottom: 5px solid #e2e2e2;
       }
 
       .delete-btn {
@@ -29,6 +29,17 @@
         border: #d9534f 1px solid;
         border-radius: 2px;
         border-bottom: 4px solid #c73733;
+      }
+
+      .ipt-search {
+        border: #d9534f 1px solid;
+      }
+
+      .ipt-btn {
+        color: white;
+        background-color: #d9534f;
+        border: #d9534f 1px solid;
+        border-radius: 2px;
       }
     </style>
     <title>My Library</title>
@@ -40,8 +51,8 @@
     </div>
     <div id="search-page" style="display: none;">
       <form id="search-form" onSubmit="return false">
-        <input name="search" />
-        <input type="submit" value="Search" onClick="submitSearch()" />
+        <input class="ipt-search" name="search" />
+        <input class="ipt-btn" type="submit" value="Search" onClick="submitSearch()" />
       </form>
 
       <table width="100%">
