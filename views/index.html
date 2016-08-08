@@ -1,7 +1,8 @@
 <html>
   <head>
     <style type="text/css" media="all">
-      #search-results tr:hover {
+      #search-results tr:hover,
+      #view-results tr:hover {
         background-color: lightgrey;
         cursor: pointer;
       }
@@ -14,6 +15,12 @@
         font-weight: bold;
         margin: 1em;
         padding: .3em;
+      }
+      .delete-btn {
+        color: white;
+        background-color: #d9534f;
+        border-color: #d43f3a;
+        border-radius: 8px;
       }
     </style>
     <title>My Library</title>
@@ -47,15 +54,19 @@
           <tr style="text-align: left;">
             <th width="45%">Title</th>
             <th width="35%">Author</th>
-            <th width="20%">Classification</th>
+            <th width="15%">Classification</th>
+            <th width="5%"></th>
           </tr>
         </thead>
         <tbody id="view-results">
           {{range .Books}}
-            <tr>
+          <tr id="book-row-{{.PK}}">
               <td>{{.Title}}</td>
               <td>{{.Author}}</td>
               <td>{{.Classification}}</td>
+              <td>
+                <button class="delete-btn" onClick="deleteBook({{.PK}})">Delete</button>
+              </td>
             </tr>
           {{end}}
         </tbody>
@@ -63,6 +74,16 @@
     </div>
     <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script type="text/javascript" charset="utf-8">
+      function deleteBook(pk) {
+        $.ajax({
+          method: "GET",
+          url: "/books/delete?pk=" + pk,
+          success: function () {
+            $("#book-row-" + pk).remove();
+          }
+        });
+      }
+
       function showSearchPage() {
         $("#search-page").show();
         $("#view-page").hide();
@@ -92,10 +113,10 @@
                 $.ajax({
                   url: "books/add?id=" + result.ID,
                   method: "GET",
-                  succes: function(data) {
+                  success: function(data) {
                     var book = JSON.parse(data);
                     if (!book) return;
-                    $("#view-results").append("<tr><td>" + book.Title +"</td><td>" + book.Author + "</td><td>" + book.Classification +"</td></tr>");
+                    $("#view-results").append("<tr id='book-row-" + book.PK + "'><td>" + book.Title +"</td><td>" + book.Author + "</td><td>" + book.Classification +"</td><td><button class='delete-btn' onClick='deleteBook(" + book.PK + ")'>Delete</button></td></tr>");
                   }
                 })
               })
