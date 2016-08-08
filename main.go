@@ -15,9 +15,15 @@ import (
 	"github.com/codegangsta/negroni"
 )
 
+type Book struct {
+	PK             int
+	Title          string
+	Author         string
+	Classification string
+}
+
 type Page struct {
-	Name     string
-	DBStatus bool
+	Books []Book
 }
 
 type SearchResult struct {
@@ -45,11 +51,13 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		p := Page{Name: "Gophers"}
-		if name := r.FormValue("name"); name != "" {
-			p.Name = name
+		p := Page{Books: []Book{}}
+		rows, _ := db.Query("select pk,title,author,classification from books")
+		for rows.Next() {
+			var b Book
+			rows.Scan(&b.PK, &b.Title, &b.Author, &b.Classification)
+			p.Books = append(p.Books, b)
 		}
-		p.DBStatus = db.Ping() == nil
 
 		if err := templates.ExecuteTemplate(w, "index.html", p); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -78,11 +86,22 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		_, err = db.Exec("insert into books (pk, title, author, id, classification) values (?, ?, ?, ?, ?)",
+		result, err := db.Exec("insert into books (pk, title, author, id, classification) values (?, ?, ?, ?, ?)",
 			nil, book.BookData.Title, book.BookData.Author, book.BookData.ID,
 			book.Classification.MostPopular)
 
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		pk, _ := result.LastInsertId()
+		b := Book{
+			PK:             int(pk),
+			Title:          book.BookData.Title,
+			Author:         book.BookData.Author,
+			Classification: book.Classification.MostPopular,
+		}
+		if err := json.NewEncoder(w).Encode(b); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
@@ -104,7 +123,7 @@ type ClassifyBookResponse struct {
 		ID     string `xml:"owi,attr"`
 	} `xml:"work"`
 	Classification struct {
-		MostPopular string `xml:sfa,attr`
+		MostPopular string `xml:"sfa,attr"`
 	} `xml:"recommendations>ddc>mostPopular"`
 }
 
