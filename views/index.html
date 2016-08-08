@@ -10,17 +10,25 @@
         width: 100%;
         text-align: center;
       }
+
       #page-switcher button {
         font-size: 24px;
         font-weight: bold;
         margin: 1em;
         padding: .3em;
+        color: #333333;
+        border: 1px solid #f5f5f5;
+        background-color: white;
+        border-radius: 3px;
+        border-bottom: 5px solid #f5f5f5;
       }
+
       .delete-btn {
         color: white;
         background-color: #d9534f;
-        border-color: #d43f3a;
-        border-radius: 8px;
+        border: #d9534f 1px solid;
+        border-radius: 2px;
+        border-bottom: 4px solid #c73733;
       }
     </style>
     <title>My Library</title>
@@ -76,8 +84,8 @@
     <script type="text/javascript" charset="utf-8">
       function deleteBook(pk) {
         $.ajax({
-          method: "GET",
-          url: "/books/delete?pk=" + pk,
+          method: "DELETE",
+          url: "/books/" + pk,
           success: function () {
             $("#book-row-" + pk).remove();
           }
@@ -111,8 +119,8 @@
               searchResults.append(row);
               row.on("click", function() {
                 $.ajax({
-                  url: "books/add?id=" + result.ID,
-                  method: "GET",
+                  url: "books?id=" + result.ID,
+                  method: "PUT",
                   success: function(data) {
                     var book = JSON.parse(data);
                     if (!book) return;
