@@ -1,6 +1,10 @@
 <html>
   <head>
     <style type="text/css" media="all">
+      #user-info {
+        text-align: right;
+      }
+
       #search-results tr:hover,
       #view-results tr:hover,
       #view-page th:hover {
@@ -46,6 +50,10 @@
     <title>My Library</title>
   </head>
   <body>
+    <div id="user-info">
+      <div>You are currently logged in as <b>{{.User}}</b></div>
+      <a href="/logout">Log out</a>
+    </div>
     <div id="page-switcher">
       <button onClick="showViewPage()">View Library</button>
       <button onClick="showSearchPage()">Add Books</button>

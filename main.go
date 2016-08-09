@@ -37,6 +37,7 @@ type User struct {
 type Page struct {
 	Books  []Book
 	Filter string
+	User   string
 }
 
 type LoginPage struct {
@@ -94,6 +95,21 @@ func getStringFromSession(r *http.Request, key string) string {
 	return strVal
 }
 
+func verifyUser(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	if r.URL.Path == "/login" {
+		next(w, r)
+		return
+	}
+
+	if username := getStringFromSession(r, "User"); username != "" {
+		if user, _ := dbmap.Get(User{}, username); user != nil {
+			next(w, r)
+			return
+		}
+	}
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+}
+
 func main() {
 	initDb()
 
@@ -107,6 +123,7 @@ func main() {
 			if err := dbmap.Insert(&user); err != nil {
 				p.Error = err.Error()
 			} else {
+				sessions.GetSession(r).Set("User", user.Username)
 				http.Redirect(w, r, "/", http.StatusFound)
 				return
 			}
@@ -121,6 +138,7 @@ func main() {
 				if err = bcrypt.CompareHashAndPassword(u.Secret, []byte(r.FormValue("password"))); err != nil {
 					p.Error = err.Error()
 				} else {
+					sessions.GetSession(r).Set("User", u.Username)
 					http.Redirect(w, r, "/", http.StatusFound)
 					return
 				}
@@ -134,6 +152,13 @@ func main() {
 			return
 		}
 
+	})
+
+	mux.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		sessions.GetSession(r).Set("User", nil)
+		sessions.GetSession(r).Set("Filter", nil)
+
+		http.Redirect(w, r, "/login", http.StatusFound)
 	})
 
 	mux.HandleFunc("/books", func(w http.ResponseWriter, r *http.Request) {
@@ -165,7 +190,7 @@ func main() {
 	}).Methods("GET").Queries("sortBy", "{sortBy:title|author|classification}")
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		p := Page{Books: []Book{}, Filter: getStringFromSession(r, "Filter")}
+		p := Page{Books: []Book{}, Filter: getStringFromSession(r, "Filter"), User: getStringFromSession(r, "User")}
 		if !getBookCollection(&p.Books, getStringFromSession(r, "SortBy"), getStringFromSession(r, "Filter"), w) {
 			return
 		}
@@ -228,6 +253,7 @@ func main() {
 	n := negroni.Classic()
 	n.Use(sessions.Sessions("goweb", cookiestore.New([]byte("mysecret123"))))
 	n.Use(negroni.HandlerFunc(verifyDatabase))
+	n.Use(negroni.HandlerFunc(verifyUser))
 	n.UseHandler(mux)
 	n.Run(":3000")
 }
