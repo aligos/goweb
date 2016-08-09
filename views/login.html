@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <style type="text/css" media="all">
+      #login-form div {
+        text-align: center;
+      }
+
+      #login-form input {
+        margin: .5em 1em;
+      }
+
+      #error {
+        text-align: center;
+        color: red;
+        margin-top: 1em;
+      }
+    </style>
+    <title>Login - My Library</title>
+  </head>
+  <body>
+    <form id="login-form">
+      <div>
+        <label for="">Username</label>
+        <input type="email" name="username" required id="" value="">
+      </div>
+      <div>
+        <label for="">Password</label>
+        <input type="password" name="password" required id="" value="">
+      </div>
+      <div>
+        <input type="submit" name="register" id="" value="Register">
+        <input type="submit" name="login" id="" value="Log In">
+      </div>
+    </form>
+    <div id="error">
+      {{.Error}}
+    </div>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script type="text/javascript" charset="utf-8">
+
+    </script>
+  </body>
+</html>
