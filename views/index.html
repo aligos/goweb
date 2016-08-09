@@ -2,7 +2,8 @@
   <head>
     <style type="text/css" media="all">
       #search-results tr:hover,
-      #view-results tr:hover {
+      #view-results tr:hover,
+      #view-page th:hover {
         background-color: lightgrey;
         cursor: pointer;
       }
@@ -68,12 +69,19 @@
       </table>
     </div>
     <div id="view-page">
+      <form id="filter-view-results" style="float: right;">
+        <select name="filter" onChange="filterViewResults()" id="" style="font-size: 18px; min-width: 10em;">
+          <option value="all">All Books</option>
+          <option value="fiction">Fiction</option>
+          <option value="nonfiction">Nonfiction</option>
+        </select>
+      </form>
       <table width="100%">
         <thead>
           <tr style="text-align: left;">
-            <th width="45%">Title</th>
-            <th width="35%">Author</th>
-            <th width="15%">Classification</th>
+            <th width="45%" onClick="sortBooks('title')">Title</th>
+            <th width="35%" onClick="sortBooks('author')">Author</th>
+            <th width="15%" onClick="sortBooks('classification')">Classification</th>
             <th width="5%"></th>
           </tr>
         </thead>
@@ -93,6 +101,39 @@
     </div>
     <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script type="text/javascript" charset="utf-8">
+      $(document).ready(function() {
+        $("#filter-view-results option[value='" + {{.Filter}} + "']").prop("selected", true);
+      })
+
+      function filterViewResults() {
+        $.ajax({
+          method: "GET",
+          url: "/books",
+          data: $("#filter-view-results").serialize(),
+          success: rebuildBookCollection
+        })
+      }
+
+      function sortBooks(columnName) {
+        $.ajax({
+          method: "GET",
+          url: "/books?sortBy=" + columnName,
+          success: rebuildBookCollection
+        })
+      }
+
+      function rebuildBookCollection(result) {
+            var books = JSON.parse(result);
+            if (!books) return;
+
+            $("#view-results").empty();
+
+            books.forEach(function(book) {
+              appendBook(book);
+            });
+
+      }
+
       function deleteBook(pk) {
         $.ajax({
           method: "DELETE",
@@ -106,6 +147,11 @@
       function showSearchPage() {
         $("#search-page").show();
         $("#view-page").hide();
+      }
+
+      function appendBook(book) {
+        $("#view-results").append("<tr id='book-row-" + book.PK + "'><td>" + book.Title +"</td><td>" + book.Author + "</td><td>" + book.Classification +"</td><td><button class='delete-btn' onClick='deleteBook(" + book.PK + ")'>Delete</button></td></tr>");
+
       }
 
       function showViewPage() {
@@ -135,7 +181,7 @@
                   success: function(data) {
                     var book = JSON.parse(data);
                     if (!book) return;
-                    $("#view-results").append("<tr id='book-row-" + book.PK + "'><td>" + book.Title +"</td><td>" + book.Author + "</td><td>" + book.Classification +"</td><td><button class='delete-btn' onClick='deleteBook(" + book.PK + ")'>Delete</button></td></tr>");
+                    appendBook(book);
                   }
                 })
               })

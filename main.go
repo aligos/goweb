@@ -14,8 +14,10 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/codegangsta/negroni"
 	gmux "github.com/gorilla/mux"
+	"github.com/larryprice/go-for-web-dev/Godeps/_workspace/src/github.com/codegangsta/negroni"
+	"github.com/larryprice/go-for-web-dev/Godeps/_workspace/src/github.com/goincremental/negroni-sessions"
+	"github.com/larryprice/go-for-web-dev/Godeps/_workspace/src/github.com/goincremental/negroni-sessions/cookiestore"
 )
 
 type Book struct {
@@ -27,7 +29,8 @@ type Book struct {
 }
 
 type Page struct {
-	Books []Book
+	Books  []Book
+	Filter string
 }
 
 type SearchResult struct {
@@ -55,6 +58,31 @@ func verifyDatabase(w http.ResponseWriter, r *http.Request, next http.HandlerFun
 	next(w, r)
 }
 
+func getBookCollection(books *[]Book, sortCol string, filterByClass string, w http.ResponseWriter) bool {
+	if sortCol == "" {
+		sortCol = "pk"
+	}
+	var where string
+	if filterByClass == "fiction" {
+		where = " where classification between '800' and '900'"
+	} else if filterByClass == "nonfiction" {
+		where = " where classification not between '800' and '900'"
+	}
+	if _, err := dbmap.Select(books, "select * from books "+where+" order by "+sortCol); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return false
+	}
+	return true
+}
+
+func getStringFromSession(r *http.Request, key string) string {
+	var strVal string
+	if val := sessions.GetSession(r).Get(key); val != nil {
+		strVal = val.(string)
+	}
+	return strVal
+}
+
 func main() {
 	templates := template.Must(template.ParseFiles("views/index.html"))
 
@@ -62,10 +90,37 @@ func main() {
 
 	mux := gmux.NewRouter()
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		p := Page{Books: []Book{}}
-		if _, err := dbmap.Select(&p.Books, "select * from books"); err != nil {
+	mux.HandleFunc("/books", func(w http.ResponseWriter, r *http.Request) {
+		var b []Book
+		if !getBookCollection(&b, getStringFromSession(r, "SortBy"), r.FormValue("filter"), w) {
+			return
+		}
+
+		sessions.GetSession(r).Set("Filter", r.FormValue("filter"))
+
+		if err := json.NewEncoder(w).Encode(b); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}).Methods("GET").Queries("filter", "{filter:all|fiction|nonfiction}")
+
+	mux.HandleFunc("/books", func(w http.ResponseWriter, r *http.Request) {
+		var b []Book
+		if !getBookCollection(&b, r.FormValue("sortBy"), getStringFromSession(r, "Filter"), w) {
+			return
+		}
+
+		sessions.GetSession(r).Set("SortBy", r.FormValue("sortBy"))
+
+		if err := json.NewEncoder(w).Encode(b); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}).Methods("GET").Queries("sortBy", "{sortBy:title|author|classification}")
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		p := Page{Books: []Book{}, Filter: getStringFromSession(r, "Filter")}
+		if !getBookCollection(&p.Books, getStringFromSession(r, "SortBy"), getStringFromSession(r, "Filter"), w) {
 			return
 		}
 
@@ -123,6 +178,7 @@ func main() {
 	}).Methods("DELETE")
 
 	n := negroni.Classic()
+	n.Use(sessions.Sessions("goweb", cookiestore.New([]byte("mysecret123"))))
 	n.Use(negroni.HandlerFunc(verifyDatabase))
 	n.UseHandler(mux)
 	n.Run(":3000")
