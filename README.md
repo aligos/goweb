@@ -6,3 +6,6 @@ still using go 1.6.3
 
 
 ###todo change to 1.7.1
+
+
+this code following tutorial by larry price
