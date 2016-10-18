@@ -5,22 +5,24 @@ import (
 	"net/http"
 
 	"database/sql"
+
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"gopkg.in/gorp.v1"
 
 	"encoding/json"
 	"encoding/xml"
-	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"strconv"
 
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/goincremental/negroni-sessions"
+	"github.com/goincremental/negroni-sessions/cookiestore"
 	gmux "github.com/gorilla/mux"
-  "github.com/urfave/negroni"
-  "github.com/goincremental/negroni-sessions"
-  "github.com/goincremental/negroni-sessions/cookiestore"
+	"github.com/urfave/negroni"
 )
 
 type Book struct {
