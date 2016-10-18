@@ -18,9 +18,9 @@ import (
 	"strconv"
 
 	gmux "github.com/gorilla/mux"
-	"github.com/larryprice/go-for-web-dev/Godeps/_workspace/src/github.com/codegangsta/negroni"
-	"github.com/larryprice/go-for-web-dev/Godeps/_workspace/src/github.com/goincremental/negroni-sessions"
-	"github.com/larryprice/go-for-web-dev/Godeps/_workspace/src/github.com/goincremental/negroni-sessions/cookiestore"
+  "github.com/urfave/negroni"
+  "github.com/goincremental/negroni-sessions"
+  "github.com/goincremental/negroni-sessions/cookiestore"
 )
 
 type Book struct {
